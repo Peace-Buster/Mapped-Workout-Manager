@@ -76,12 +76,15 @@ class App {
   #workouts = []; 
 
   constructor() {
+    //Get user's position
     this._getPosition();
 
+    // Get data from Local storage
+    this._getLocalStorage();
+
+    // Attach Event Handlers
     form.addEventListener("submit", this._newWorkout.bind(this));
-
     inputType.addEventListener("change", this._toggleElevationField);
-
     containerWorkouts.addEventListener('click',this._moveToPopup.bind(this));
   }
 
@@ -108,6 +111,11 @@ class App {
     }).addTo(this.#map);
 
     this.#map.on("click", this._showForm.bind(this));
+
+    this.#workouts.forEach(work =>{
+      this._renderWorkoutMarker(work);
+    } )
+
   }
 
   _showForm(mapE) {
@@ -172,7 +180,7 @@ _hideForm() {
 
     // 5.Render wprkout on map as marker
     // Display Marker
-    this.renerWorkoutMarker(workout);
+    this._renderWorkoutMarker(workout);
 
     // 6. Render Workout on list
     this._renderWorkout(workout);
@@ -180,10 +188,12 @@ _hideForm() {
     // Hide the form + CLearing Input field
     this._hideForm();
 
+    // 7. Set local storage to all workouts
+    this._setLocalStorage();
 
   }
    
-  renerWorkoutMarker(workout) {
+  _renderWorkoutMarker(workout) {
     L.marker(workout.coords)
       .addTo(this.#map)
       .bindPopup(
@@ -256,7 +266,7 @@ _hideForm() {
     if(!workoutEl) return;
 
     const workout = this.#workouts.find(work => work.id === workoutEl.dataset.id);
-    console.log(workout);
+    // console.log(workout);
 
     this.#map.setView(workout.coords, this.#mapZoomLevel, {
      animate: true,
@@ -266,7 +276,30 @@ _hideForm() {
     });
 
     //using public inetface
-    workout.click();
+    // workout.click();  // its causes a problem in local storage, as objects are converted to string and then string are converted to object so all the objects losses their chain and hence we cannot use the click function as it as assigned to obejcts
+   }
+
+   _setLocalStorage() {
+    // Note : Local storage is not a good practice as it slowsdowns are website and have a big vurnabilty called 'blocking'.
+    // Convert object to string
+    localStorage.setItem('workouts',JSON.stringify(this.#workouts));
+   }
+   _getLocalStorage() {
+    // String to object ?
+    const data = JSON.parse(localStorage.getItem('workouts'));
+    // console.log(data);
+
+    if(!data) return;
+
+    this.#workouts = data;
+    this.#workouts.forEach(work => {
+      this._renderWorkout(work);
+    })
+   }
+
+   reset() {
+    localStorage.removeItem('workouts');
+    location.reload();
    }
 }
 
